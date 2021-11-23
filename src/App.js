@@ -1,24 +1,81 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useRef } from "react";
+import useWindowSize from "./components/hooks/useWindowSize";
+import { ThemeProvider } from 'styled-components';
+import { mainTheme, GlobalStyle } from './globalStyle';
+import Navbar from './components/Navbar/Navbar';
+import { Home, About, Projects } from './pages/index';
+import SmoothScrolling from "./components/SmoothScrolling/SmoothScrolling";
 
 function App() {
+
+  //Hook to grab window size
+  const size = useWindowSize();
+
+  // Ref for parent div and scrolling div
+  const app = useRef();
+  const scrollContainer = useRef();
+
+  // Configs
+  const data = {
+    ease: 0.08, // set the ease
+    current: 0,
+    previous: 0,
+    rounded: 0
+  };
+
+  // Run scrollrender once page is loaded.
+  useEffect(() => {
+    requestAnimationFrame(() => skewScrolling());
+  }, []);
+
+  //set the height of the body.
+  useEffect(() => {
+    setBodyHeight();
+  }, [size.height]);
+
+  //Set the height of the body to the height of the scrolling div
+  const setBodyHeight = () => {
+    document.body.style.height = `${scrollContainer.current.getBoundingClientRect().height
+      }px`;
+  };
+
+  // Scrolling
+  const skewScrolling = () => {
+    //Set Current to the scroll position amount
+    data.current = window.scrollY;
+    // Set Previous to the scroll previous position
+    data.previous += (data.current - data.previous) * data.ease;
+    // Set rounded to
+    data.rounded = Math.round(data.previous * 100) / 100;
+
+    // Difference between
+    const difference = data.current - data.rounded;
+    const acceleration = difference / size.width;
+    const velocity = +acceleration;
+    const skew = velocity * 20;
+
+    //Assign skew and smooth scrolling to the scroll container
+    scrollContainer.current.style.transform = `translate3d(0, -${data.rounded}px, 0) skewY(${skew}deg)`;
+
+    //loop vai raf
+    requestAnimationFrame(() => skewScrolling());
+  };
+
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <>
+      <div ref={app} className="App">
+        <GlobalStyle />
+        <ThemeProvider theme={mainTheme}>
+          <div ref={scrollContainer}>
+            <Home />
+            <Navbar />
+            <About />
+            <Projects />
+          </div>
+        </ThemeProvider>
+      </div>
+    </>
   );
 }
 
